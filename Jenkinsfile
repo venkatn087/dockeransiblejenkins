@@ -1,50 +1,46 @@
-pipeline{
+pipeline {
     agent any
     tools {
-      maven 'maven3'
+        maven 'maven_3.9.6'
     }
     environment {
-      DOCKER_TAG = getVersion()
+    DOCKER_TAG = getVersion()
     }
-    stages{
-        stage('SCM'){
-            steps{
+    stages {
+        stage('Checkout') {
+            steps {
                 git credentialsId: 'github', 
-                    url: 'https://github.com/javahometech/dockeransiblejenkins'
+                      url: 'https://github.com/venkatn087/dockeransiblejenkins.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('Build Docker image') {
+            steps {
+              sh 'docker build -t venkatn087/webapp:${DOCKER_TAG} .'  
+            }
+        }
+         stage('Push Docker image') {
+            steps {
+                withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhubpwd')]) {
+                    sh 'docker login -u venkatn087 -p ${dockerhubpwd}'
+                 }
+               sh 'docker push venkatn087/webapp:${DOCKER_TAG}'  
+            }
+        }
+        stage('Deploy the Docker image') {
+            steps {
+                ansiblePlaybook credentialsId: 'ansible_dev_server', disableHostKeyChecking: true, extras: "-e DOCKER_TAG=${DOCKER_TAG}", installation: 'ansible', inventory: 'dev.inv', playbook: 'deploy-docker.yml'
             }
         }
         
-        stage('Maven Build'){
-            steps{
-                sh "mvn clean package"
-            }
-        }
-        
-        stage('Docker Build'){
-            steps{
-                sh "docker build . -t kammana/hariapp:${DOCKER_TAG} "
-            }
-        }
-        
-        stage('DockerHub Push'){
-            steps{
-                withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerHubPwd')]) {
-                    sh "docker login -u kammana -p ${dockerHubPwd}"
-                }
-                
-                sh "docker push kammana/hariapp:${DOCKER_TAG} "
-            }
-        }
-        
-        stage('Docker Deploy'){
-            steps{
-              ansiblePlaybook credentialsId: 'dev-server', disableHostKeyChecking: true, extras: "-e DOCKER_TAG=${DOCKER_TAG}", installation: 'ansible', inventory: 'dev.inv', playbook: 'deploy-docker.yml'
-            }
-        }
     }
 }
 
-def getVersion(){
-    def commitHash = sh label: '', returnStdout: true, script: 'git rev-parse --short HEAD'
+def getVersion() {
+    def commitHash = sh label: 'commit_id', returnStdout: true, script: 'git rev-parse --short HEAD'
     return commitHash
 }
