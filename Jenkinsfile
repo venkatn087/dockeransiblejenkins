@@ -18,6 +18,26 @@ pipeline {
                 sh 'mvn clean package'
             }
         }
+        stage('SAST') {
+            steps {
+                withSonarQubeEnv('sonarqube_9.9.5'){
+                sh "mvn sonar:sonar \
+                    -D sonar.projectKey=testproject12"
+                }
+            }
+        }
+        stage('Quaity Gate status') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    script {
+                         def qualitygate = waitForQualityGate()
+                         if (qualitygate.status != 'OK') {
+                             error "Pipeline aborted due to the quality gate failure: ${qualitygate.status}"
+                        }
+                    }
+                }
+            }
+        }
         stage('Build Docker image') {
             steps {
               sh 'docker build -t venkatn087/webapp:${DOCKER_TAG} .'  
