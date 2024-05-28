@@ -1,14 +1,11 @@
 pipeline {
     agent any
-   
     tools {
         maven 'maven_3.9.6'
     }
-
     environment {
     DOCKER_TAG = getVersion()
     }
-
     stages {
         stage('Checkout') {
             steps {
