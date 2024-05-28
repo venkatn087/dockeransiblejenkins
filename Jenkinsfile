@@ -8,6 +8,7 @@ pipeline {
     environment {
     DOCKER_TAG = getVersion()
     }
+
     stages {
         stage('Checkout') {
             steps {
