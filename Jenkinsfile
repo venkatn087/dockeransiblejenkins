@@ -13,6 +13,11 @@ pipeline {
                       url: 'https://github.com/venkatn087/dockeransiblejenkins.git'
             }
         }
+        stage(Secret_Detection) {
+            steps {
+              sh 'trufflehog git --no-update https://github.com/venkatn087/dockeransiblejenkins'
+            }
+        }
         stage('Build') {
             steps {
                 sh 'mvn clean package'
