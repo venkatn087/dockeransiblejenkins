@@ -18,6 +18,11 @@ pipeline {
               sh 'trufflehog git --no-update https://github.com/venkatn087/dockeransiblejenkins'
             }
         }
+        stage('SCA') {
+            steps {
+               sh 'fossa analyze' 
+            }
+        }
         stage('Build') {
             steps {
                 sh 'mvn clean package'
