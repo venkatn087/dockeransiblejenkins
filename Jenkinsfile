@@ -48,14 +48,14 @@ pipeline {
                 }
             }
         }
-        stage('IAC_Scan') {
-            steps {
-               sh 'checkov -s -d .'
-            }
-        }
         stage('Build Docker image') {
             steps {
               sh 'docker build -t venkatn087/webapp:${DOCKER_TAG} .'  
+            }
+        }
+        stage('IAC_Scan') {
+            steps {
+               sh 'checkov -s -d .'
             }
         }
          stage('Push Docker image') {
